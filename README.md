@@ -1,5 +1,7 @@
 # AirQualitySP project: air quality notifications for Spain
 
+__UNDER CONSTRUCTION__
+
 ## What is AirQualitySP
 
 ## Project status
@@ -67,9 +69,9 @@ and I'm doing my best to keep it up to date.
 
 ## References
 
-[Yolo](https://poweruser.blog/aws-cdk-with-go-part1-4075eeeceaad)
+[poweruser](https://poweruser.blog/aws-cdk-with-go-part1-4075eeeceaad)
 
-```
+```go
 package main
 
 import (
