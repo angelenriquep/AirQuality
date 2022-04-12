@@ -11,6 +11,11 @@ import { Construct } from 'constructs';
 const wakiToken = process.env.ENV_WAKI_TOKEN_KEY || ''
 
 const DYNAMODB_TABLE_NAME = process.env.ENV_DYNAMODB_TABLE_NAME || 'airQualityCities'
+const TWITTER_API_KEY = process.env.ENV_TWITTER_API_KEY || 'fake'
+const TWITTER_SECRET_KEY = process.env.ENV_TWITTER_SECRET_KEY || 'fake'
+const TWITTER_ACCESSTOKEN = process.env.ENV_TWITTER_ACCESSTOKEN || 'fake'
+const TWITTER_ACCESSSECRET = process.env.ENV_TWITTER_ACCESSSECRET || 'fake'
+
 const LAMBDA_WAQI_FUNCTION = 'airQualityWaqiFeed'
 const LAMBDA_FEED_PROCESSOR_FUNCTION = 'airQualityFeedProcessor'
 const LAMBDA_FEED_TWITTER_PUBLISHER = 'airQualityTwitterPublisher'
@@ -58,6 +63,11 @@ export class FeedApp extends Stack {
 
     rule.addTarget(new LambdaFunction(lambdaFeedFunctionWaqi));
 
+    // Create sns topic
+    const topic = new Topic(this, SNS_TOPIC, {
+      displayName: 'New Pollution Data',
+    });
+
     // Lambda Feed processor
     const lambdaFunctionFeedProcessor = new Function(this, LAMBDA_FEED_PROCESSOR_FUNCTION, {
       code: new AssetCode('../feed-lambda-processor'),
@@ -66,8 +76,7 @@ export class FeedApp extends Stack {
       timeout: Duration.seconds(300),
       memorySize: 256,
       environment: {
-        "DYNAMODB_TABLE_NAME": DYNAMODB_TABLE_NAME,
-        "SNS_TOPIC": SNS_TOPIC
+        "SNS_TOPIC_ARN": topic.topicArn
       }
     });
 
@@ -77,24 +86,25 @@ export class FeedApp extends Stack {
     }));
 
     table.grantStreamRead(lambdaFunctionFeedProcessor);
+    topic.grantPublish(lambdaFunctionFeedProcessor)
 
-    // Create sns topic
-    const topic = new Topic(this, SNS_TOPIC, {
-      displayName: 'New Pollution Data',
-    });
 
     // Lambda twitter publisher
     const twitterLambda = new Function(this, LAMBDA_FEED_TWITTER_PUBLISHER, {
-      code: new AssetCode('../feed-lambda-processor'),
+      code: new AssetCode('../feed-lambda-twitter-processor'),
       handler: 'main',
       runtime: Runtime.GO_1_X,
       timeout: Duration.seconds(300),
       memorySize: 256,
-      environment: {}
+      environment: {
+        "TWITTER_API_KEY": TWITTER_API_KEY,
+        "TWITTER_SECRET_KEY": TWITTER_SECRET_KEY,
+        "TWITTER_ACCESSTOKEN": TWITTER_ACCESSTOKEN,
+        "TWITTER_ACCESSSECRET": TWITTER_ACCESSSECRET,
+      }
     });
 
     topic.addSubscription(new LambdaSubscription(twitterLambda));
-
 
   }
 }
