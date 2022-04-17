@@ -1,4 +1,4 @@
-# AirQualitySP project: air quality notifications for Spain
+# AirQualitySP project: air quality and pollution notifications for Spain
 
 __UNDER CONSTRUCTION__
 

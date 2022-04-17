@@ -2,7 +2,7 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
+	"log"
 	"os"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -14,7 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/sns"
 )
 
-// DynamoDBStreamRecord -
+// DynamoDBStreamRecord - Shape for dynamo strem record.
 type DynamoDBStreamRecord struct {
 	ApproximateCreationDateTime events.SecondsEpochTime             `json:"ApproximateCreationDateTime,omitempty"`
 	Keys                        map[string]*dynamodb.AttributeValue `json:"Keys,omitempty"`
@@ -25,7 +25,7 @@ type DynamoDBStreamRecord struct {
 	StreamViewType              string                              `json:"StreamViewType"`
 }
 
-// DynamoDBEventRecord -
+// DynamoDBEventRecord - Shape for dynamo event record.
 type DynamoDBEventRecord struct {
 	AWSRegion      string                       `json:"awsRegion"`
 	Change         DynamoDBStreamRecord         `json:"dynamodb"`
@@ -37,12 +37,12 @@ type DynamoDBEventRecord struct {
 	UserIdentity   *events.DynamoDBUserIdentity `json:"userIdentity,omitempty"`
 }
 
-// DynamoDBEvent -
+// DynamoDBEvent - A list of Dynamodb records.
 type DynamoDBEvent struct {
 	Records []DynamoDBEventRecord `json:"Records"`
 }
 
-// City -
+// City - Struct to store a city pollution data.
 type City struct {
 	CityName  string `json:"cityName"`
 	CreatedAt string `json:"createdAt"`
@@ -50,37 +50,34 @@ type City struct {
 	Pollution int    `json:"pollution"`
 }
 
-// Message -
+// Message - SNS message shape.
 type Message struct {
 	Default string `json:"default"`
 }
 
-func main() {
-	lambda.Start(lambdaHandler)
-}
-
-// changed type of event from: events.DynamoDBEvent to DynamoDBEvent (see below)
+// Handles a Dynamodb event from a DynamoDB stream and sends the data to a SNS
+// topic.
 func lambdaHandler(event DynamoDBEvent) error {
 	var snsArn = os.Getenv("SNS_TOPIC_ARN")
+
 	sess := session.Must(session.NewSessionWithOptions(session.Options{
 		SharedConfigState: session.SharedConfigEnable,
 	}))
-	svc := sns.New(sess)
 
-	fmt.Println(snsArn)
+	svc := sns.New(sess)
 
 	for _, record := range event.Records {
 
 		change := record.Change
-		newImage := change.NewImage // now of type: map[string]*dynamodb.AttributeValue
+		newImage := change.NewImage
 
 		var item City
+		// Converts from dynamodb attributes to Go types
 		err := dynamodbattribute.UnmarshalMap(newImage, &item)
 		if err != nil {
+			log.Println(err.Error())
 			return err
 		}
-
-		fmt.Println(item)
 
 		itemStr, _ := json.Marshal(item)
 
@@ -89,7 +86,6 @@ func lambdaHandler(event DynamoDBEvent) error {
 		}
 
 		messageBytes, _ := json.Marshal(message)
-
 		messageStr := string(messageBytes)
 
 		result, err := svc.Publish(&sns.PublishInput{
@@ -97,14 +93,18 @@ func lambdaHandler(event DynamoDBEvent) error {
 			Message:          aws.String(messageStr),
 			MessageStructure: aws.String("json"),
 		})
+
 		if err != nil {
-			fmt.Println(err.Error())
+			log.Println(err.Error())
 			os.Exit(1)
 		}
 
-		fmt.Println(*result)
-
+		log.Println(*result)
 	}
 
 	return nil
+}
+
+func main() {
+	lambda.Start(lambdaHandler)
 }

@@ -11,11 +11,10 @@ import { Construct } from 'constructs';
 const wakiToken = process.env.ENV_WAKI_TOKEN_KEY || ''
 
 const DYNAMODB_TABLE_NAME = process.env.ENV_DYNAMODB_TABLE_NAME || 'airQualityCities'
-const TWITTER_API_KEY = process.env.ENV_TWITTER_API_KEY || 'fake'
-const TWITTER_SECRET_KEY = process.env.ENV_TWITTER_SECRET_KEY || 'fake'
-const TWITTER_ACCESSTOKEN = process.env.ENV_TWITTER_ACCESSTOKEN || 'fake'
-const TWITTER_ACCESSSECRET = process.env.ENV_TWITTER_ACCESSSECRET || 'fake'
-
+const TWITTER_ACCESS_TOKEN_KEY = process.env.ENV_TWITTER_ACCESS_TOKEN_KEY || 'fake'
+const TWITTER_ACCESS_TOKEN_SECRET = process.env.ENV_TWITTER_ACCESS_TOKEN_SECRET || 'fake'
+const TWITTER_CONSUMER_KEY = process.env.ENV_TWITTER_CONSUMER_KEY || 'fake'
+const TWITTER_CONSUMER_SECRET = process.env.ENV_TWITTER_CONSUMER_SECRET || 'fake'
 const LAMBDA_WAQI_FUNCTION = 'airQualityWaqiFeed'
 const LAMBDA_FEED_PROCESSOR_FUNCTION = 'airQualityFeedProcessor'
 const LAMBDA_FEED_TWITTER_PUBLISHER = 'airQualityTwitterPublisher'
@@ -97,10 +96,10 @@ export class FeedApp extends Stack {
       timeout: Duration.seconds(300),
       memorySize: 256,
       environment: {
-        "TWITTER_API_KEY": TWITTER_API_KEY,
-        "TWITTER_SECRET_KEY": TWITTER_SECRET_KEY,
-        "TWITTER_ACCESSTOKEN": TWITTER_ACCESSTOKEN,
-        "TWITTER_ACCESSSECRET": TWITTER_ACCESSSECRET,
+        "TWITTER_ACCESS_TOKEN_KEY": TWITTER_ACCESS_TOKEN_KEY,
+        "TWITTER_ACCESS_TOKEN_SECRET": TWITTER_ACCESS_TOKEN_SECRET,
+        "TWITTER_CONSUMER_KEY": TWITTER_CONSUMER_KEY,
+        "TWITTER_CONSUMER_SECRET": TWITTER_CONSUMER_SECRET,
       }
     });
 

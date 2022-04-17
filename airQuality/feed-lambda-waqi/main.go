@@ -96,9 +96,7 @@ func handler(ctx context.Context, e events.APIGatewayV2HTTPRequest) (events.APIG
 	return events.APIGatewayV2HTTPResponse{
 		StatusCode: 201,
 		Body:       string("Successfully added: " + city.CityName),
-		Headers: map[string]string{
-			"Content-Type": "application/json",
-		},
+		Headers:    map[string]string{"Content-Type": "application/json"},
 	}, nil
 }
 
@@ -108,8 +106,6 @@ func generateErrorResponse(error string, err error) events.APIGatewayV2HTTPRespo
 	return events.APIGatewayV2HTTPResponse{
 		StatusCode: 500,
 		Body:       string(error),
-		Headers: map[string]string{
-			"Content-Type": "application/json",
-		},
+		Headers:    map[string]string{"Content-Type": "application/json"},
 	}
 }

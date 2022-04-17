@@ -1,5 +1,5 @@
-# Variables
-ENV := .env
+# Change this line acording to your env variables file.
+ENV := .env.dev
 
 # Environment variables for project
 include $(ENV)
