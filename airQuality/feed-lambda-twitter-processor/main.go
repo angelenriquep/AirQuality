@@ -2,9 +2,11 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -12,14 +14,21 @@ import (
 	"github.com/dghubble/oauth1"
 )
 
-// Credentials stores all of our access/consumer tokens
-// and secret keys needed for authentication against
-// the twitter REST API.
+// Credentials stores all of our access/consumer tokens and secret keys needed
+// for authentication against the twitter REST API.
 type Credentials struct {
 	ConsumerKey       string
 	ConsumerSecret    string
 	AccessToken       string
 	AccessTokenSecret string
+}
+
+// City - Stores a city.
+type City struct {
+	CityName  string
+	CreatedAt string
+	ID        int
+	Pollution int
 }
 
 func main() {
@@ -40,25 +49,33 @@ func handler(ctx context.Context, snsEvent events.SNSEvent) {
 		log.Println(err)
 	}
 
+	cityStatuses := make([]string, 0, len(snsEvent.Records))
+
 	for _, record := range snsEvent.Records {
 		snsRecord := record.SNS
 		fmt.Printf("[%s %s] Message = %s \n", record.EventSource, snsRecord.Timestamp, snsRecord.Message)
 
-		tweet, resp, err := client.Statuses.Update(snsRecord.Message, nil)
-		if err != nil {
+		var city City
+		if err := json.Unmarshal([]byte(snsRecord.Message), &city); err != nil {
 			log.Println(err)
+			return
 		}
-		log.Printf("%+v\n", resp)
-		log.Printf("%+v\n", tweet)
 
+		message := fmt.Sprintf("City: %s  Pollution:  %d", city.CityName, city.Pollution)
+		cityStatuses = append(cityStatuses, message)
 	}
+
+	strCities := strings.Join(cityStatuses, "\n")
+
+	_, resp, err := client.Statuses.Update(strCities, nil)
+	if err != nil {
+		log.Println(err)
+	}
+	log.Printf("%+v\n", resp)
 }
 
-// getClient is a helper function that will return a twitter client
-// that we can subsequently use to send tweets, or to stream new tweets
-// this will take in a pointer to a Credential struct which will contain
-// everything needed to authenticate and return a pointer to a twitter Client
-// or an error
+// getClient helper function that will return a twitter client that we can
+// subsequently use to send tweets, or to stream new tweets
 func getClient(creds *Credentials) (*twitter.Client, error) {
 	config := oauth1.NewConfig(creds.ConsumerKey, creds.ConsumerSecret)
 	token := oauth1.NewToken(creds.AccessToken, creds.AccessTokenSecret)

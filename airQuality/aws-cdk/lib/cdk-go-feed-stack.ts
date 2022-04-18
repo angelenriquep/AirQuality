@@ -8,8 +8,8 @@ import { Schedule, Rule } from 'aws-cdk-lib/aws-events';
 import { Topic } from 'aws-cdk-lib/aws-sns';
 import { Construct } from 'constructs';
 
-const wakiToken = process.env.ENV_WAKI_TOKEN_KEY || ''
-
+const WAKI_TOKEN = process.env.ENV_WAKI_TOKEN_KEY || ''
+const CITY_LIST = process.env.ENV_CITY_LIST || ''
 const DYNAMODB_TABLE_NAME = process.env.ENV_DYNAMODB_TABLE_NAME || 'airQualityCities'
 const TWITTER_ACCESS_TOKEN_KEY = process.env.ENV_TWITTER_ACCESS_TOKEN_KEY || 'fake'
 const TWITTER_ACCESS_TOKEN_SECRET = process.env.ENV_TWITTER_ACCESS_TOKEN_SECRET || 'fake'
@@ -50,7 +50,8 @@ export class FeedApp extends Stack {
       memorySize: 256,
       environment: {
         "DYNAMODB_TABLE_NAME": DYNAMODB_TABLE_NAME,
-        "WAKI_TOKEN": wakiToken,
+        "WAKI_TOKEN": WAKI_TOKEN,
+        "LIST_OF_CITIES": CITY_LIST,
       }
     });
 

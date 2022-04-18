@@ -8,6 +8,8 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
+	"sync"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -20,6 +22,9 @@ import (
 
 var (
 	dynaClient dynamodbiface.DynamoDBAPI
+	tableName  string = os.Getenv("DYNAMODB_TABLE_NAME")
+	wakiToken  string = os.Getenv("WAKI_TOKEN")
+	cities     string = os.Getenv("LIST_OF_CITIES")
 )
 
 // City - Stores a city.
@@ -44,58 +49,54 @@ type Response struct {
 	} `json:"data"`
 }
 
-func main() {
-	lambda.Start(handler)
-}
-
 func handler(ctx context.Context, e events.APIGatewayV2HTTPRequest) (events.APIGatewayV2HTTPResponse, error) {
-	var tableName = os.Getenv("DYNAMODB_TABLE_NAME")
-	var wakiToken = os.Getenv("WAKI_TOKEN")
-
 	sess := session.Must(session.NewSessionWithOptions(session.Options{
 		SharedConfigState: session.SharedConfigEnable,
 	}))
 
 	svc := dynamodb.New(sess)
 
-	resp, err := http.Get(fmt.Sprintf("https://api.waqi.info/feed/Madrid/?token=" + wakiToken))
-	if err != nil {
-		log.Fatalln(err)
-	}
-	defer resp.Body.Close()
+	cityList := strings.Split(cities, ",")
+	citySlice := make([]City, 0, len(cityList))
 
-	body, err := ioutil.ReadAll(resp.Body)
+	wg := sync.WaitGroup{}
 
-	var result Response
-	if err := json.Unmarshal(body, &result); err != nil {
-		return generateErrorResponse("Got error marshalling a city item: %s", err), nil
-	}
+	for _, cityName := range cityList {
+		wg.Add(1)
+		go func(cityName string) {
+			city, err := getPollutionFromCity(cityName)
+			if err != nil {
+				return
+			}
 
-	city := City{
-		CityName:  result.Data.City.Name,
-		CreatedAt: result.Data.Time.Iso,
-		ID:        result.Data.Idx,
-		Pollution: result.Data.Aqi,
-	}
-
-	av, err := dynamodbattribute.MarshalMap(city)
-	if err != nil {
-		return generateErrorResponse("Got error marshalling a city item: %s", err), nil
+			citySlice = append(citySlice, city)
+			fmt.Printf("Fetched city %s\n", city.CityName)
+			wg.Done()
+		}(cityName)
 	}
 
-	input := &dynamodb.PutItemInput{
-		Item:      av,
-		TableName: aws.String(tableName),
-	}
+	wg.Wait()
 
-	_, err = svc.PutItem(input)
-	if err != nil {
-		log.Fatalf("Got error calling PutItem: %s", err)
+	for _, city := range citySlice {
+		av, err := dynamodbattribute.MarshalMap(&city)
+		if err != nil {
+			return generateErrorResponse("Got error marshalling a city item: %s", err), nil
+		}
+
+		input := &dynamodb.PutItemInput{
+			Item:      av,
+			TableName: aws.String(tableName),
+		}
+
+		_, err = svc.PutItem(input)
+		if err != nil {
+			log.Fatalf("Got error calling PutItem: %s", err)
+		}
 	}
 
 	return events.APIGatewayV2HTTPResponse{
 		StatusCode: 201,
-		Body:       string("Successfully added: " + city.CityName),
+		Body:       string("Successfully saved cities into DB"),
 		Headers:    map[string]string{"Content-Type": "application/json"},
 	}, nil
 }
@@ -108,4 +109,39 @@ func generateErrorResponse(error string, err error) events.APIGatewayV2HTTPRespo
 		Body:       string(error),
 		Headers:    map[string]string{"Content-Type": "application/json"},
 	}
+}
+
+var baseURL = "https://api.waqi.info/feed/%s/?token=" + wakiToken
+
+// Send API request to Waqi to get the a city pollution stats
+func getPollutionFromCity(cityName string) (city City, err error) {
+	url := fmt.Sprintf(baseURL, cityName)
+
+	resp, err := http.Get(url)
+
+	if err != nil {
+		return City{}, err
+	}
+
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+
+	var result Response
+	if err := json.Unmarshal(body, &result); err != nil {
+		return City{}, err
+	}
+
+	tmpCity := City{
+		CityName:  result.Data.City.Name,
+		CreatedAt: result.Data.Time.Iso,
+		ID:        result.Data.Idx,
+		Pollution: result.Data.Aqi,
+	}
+
+	return tmpCity, nil
+}
+
+func main() {
+	lambda.Start(handler)
 }
