@@ -23,7 +23,7 @@ import (
 var (
 	dynaClient dynamodbiface.DynamoDBAPI
 	tableName  string = os.Getenv("DYNAMODB_TABLE_NAME")
-	wakiToken  string = os.Getenv("WAKI_TOKEN")
+	waqiToken  string = os.Getenv("WAQI_TOKEN")
 	cities     string = os.Getenv("LIST_OF_CITIES")
 )
 
@@ -111,7 +111,7 @@ func generateErrorResponse(error string, err error) events.APIGatewayV2HTTPRespo
 	}
 }
 
-var baseURL = "https://api.waqi.info/feed/%s/?token=" + wakiToken
+var baseURL = "https://api.waqi.info/feed/%s/?token=" + waqiToken
 
 // Send API request to Waqi to get the a city pollution stats
 func getPollutionFromCity(cityName string) (city City, err error) {
