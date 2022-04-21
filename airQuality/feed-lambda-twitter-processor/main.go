@@ -14,6 +14,15 @@ import (
 	"github.com/dghubble/oauth1"
 )
 
+const (
+	aqiIndexGood                  string = "Good"
+	aqiIndexModerate              string = "Moderate"
+	aqiIndexUnhealthyForSensitive string = "Unhealthy for Sensitive Groups"
+	aqiIndexUnhealthy             string = "Unhealthy"
+	aqiIndexVeryUnhealthy         string = "Very Unhealthy"
+	aqiIndexHazardous             string = "Hazardous"
+)
+
 // Credentials stores all of our access/consumer tokens and secret keys needed
 // for authentication against the twitter REST API.
 type Credentials struct {
@@ -61,7 +70,32 @@ func handler(ctx context.Context, snsEvent events.SNSEvent) {
 			return
 		}
 
-		message := fmt.Sprintf("City: %s  Pollution:  %d", city.CityName, city.Pollution)
+		var strPollution string
+
+		switch level := city.Pollution; {
+		case level >= 0 && level < 51:
+			strPollution = aqiIndexGood
+		case level >= 51 && level <= 100:
+			strPollution = aqiIndexModerate
+		case level >= 101 && level <= 150:
+			strPollution = aqiIndexUnhealthyForSensitive
+		case level >= 151 && level <= 200:
+			strPollution = aqiIndexUnhealthy
+		case level >= 201 && level <= 300:
+			strPollution = aqiIndexVeryUnhealthy
+		case level >= 301:
+			strPollution = aqiIndexHazardous
+		default:
+			strPollution = "Not Defined"
+		}
+
+		message := fmt.Sprintf(
+			"City: %s\nPollution level: %s \nIdx (%d) \nFont: https://waqi.info/",
+			city.CityName,
+			strPollution,
+			city.Pollution,
+		)
+
 		cityStatuses = append(cityStatuses, message)
 	}
 
