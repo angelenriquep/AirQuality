@@ -90,7 +90,7 @@ func handler(ctx context.Context, snsEvent events.SNSEvent) {
 		}
 
 		message := fmt.Sprintf(
-			"City: %s\nPollution level: %s \nIdx: %d \nFont: https://waqi.info/",
+			"City: %s\nAir Quality: %s \nPollution level Idx: %d \nSource: https://waqi.info/",
 			city.CityName,
 			strPollution,
 			city.Pollution,
