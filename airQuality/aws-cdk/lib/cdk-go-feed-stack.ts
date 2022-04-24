@@ -80,7 +80,7 @@ export class FeedApp extends Stack {
       }
     });
 
-    // Add an SQS Event Source from the DynamoDB Table to the Lambda Function
+    // Add event source mapping to read from the stream
     lambdaFunctionFeedProcessor.addEventSource(new DynamoEventSource(table, {
       startingPosition: StartingPosition.LATEST,
     }));
