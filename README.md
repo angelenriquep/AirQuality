@@ -58,3 +58,6 @@ and I'm doing my best to keep it up to date.
 ## Demo
 
 [DEMO](https://twitter.com/ngelEnr27558455)
+
+![image](https://github.com/angelenriquep/AirQuality/assets/56274826/6c49919f-7a86-4169-849a-0f7528a6eaa1)
+
