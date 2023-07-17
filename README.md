@@ -57,7 +57,7 @@ and I'm doing my best to keep it up to date.
 
 ## High-level design
 
-[Design](https://github.com/angelenriquep/AirQuality/blob/master/images/Hight-Level-Design.png)
+![Design](https://github.com/angelenriquep/AirQuality/blob/master/images/Hight-Level-Design.png)
 
 ## Demo
 
