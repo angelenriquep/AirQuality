@@ -55,6 +55,10 @@ Would you like to provide any feedback?, please open up an Issue. I appreciate
 feedback and comments, although please keep in mind the project is incomplete,
 and I'm doing my best to keep it up to date.
 
+## High-level design
+
+[Design](https://github.com/angelenriquep/AirQuality/blob/master/images/Hight-Level-Design.png)
+
 ## Demo
 
 [DEMO](https://twitter.com/ngelEnr27558455)
